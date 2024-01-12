@@ -25,18 +25,19 @@ interface Grade {
 
 export default function Home() {
   const [grades, setGrades] = useState<Grade[]>(() => {
-    const storedGrades = localStorage.getItem("grades");
-    if (storedGrades) {
-      return JSON.parse(storedGrades);
-    } else {
-      return [
-        {
-          subject: "Subject 1",
-          grade: "0",
-          units: "3",
-        },
-      ];
+    if (typeof window !== "undefined") {
+      const storedGrades = localStorage.getItem("grades");
+      if (storedGrades) {
+        return JSON.parse(storedGrades);
+      }
     }
+    return [
+      {
+        subject: "Subject 1",
+        grade: "0",
+        units: "3",
+      },
+    ];
   });
   const [gwa, setGwa] = useState<number>(0);
   const [error, setError] = useState<string>("");
@@ -77,7 +78,12 @@ export default function Home() {
     }
     const updatedGrades = [...grades];
     updatedGrades.splice(index, 1);
-    setGrades(updatedGrades);
+    setGrades(
+      updatedGrades.map((grade, i) => ({
+        ...grade,
+        subject: `Subject ${i + 1}`,
+      }))
+    );
   };
 
   // Calculate the GWA
@@ -161,7 +167,7 @@ export default function Home() {
           </TableBody>
         </Table>
         <button
-          className="bg-white rounded-xl mt-4 w-full text-main-blue font-bold uppercase px-2 py-4 block text-xl"
+          className="bg-white rounded-xl mt-4 w-full text-main-blue font-bold uppercase px-2 py-4 block text-xl transition-colors duration-300  hover:bg-main-yellow"
           onClick={calculateGwa}
         >
           Calculate
