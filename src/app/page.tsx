@@ -73,7 +73,7 @@ export default function Home() {
   // Remove a subject
   const removeSubject = (index: number) => {
     if (grades.length === 1) {
-      setError("Cannot remove the last subject");
+      setError("There should be atleast 1 subject");
       return;
     }
     const updatedGrades = [...grades];
@@ -107,75 +107,95 @@ export default function Home() {
   };
 
   return (
-    <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
-      <h1 className="text-secondary text-6xl font-bold uppercase mb-10 text-white">
-        GWA Calculator
-      </h1>
-      <div className="max-w-2xl mx-auto">
-        {grades.length <= 1 && error && (
-          <Alert variant="destructive" className="mb-4">
-            <ExclamationTriangleIcon className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Cannot remove the last subject.</AlertDescription>
-          </Alert>
-        )}
-        <button
-          className="bg-white rounded-t-xl text-2xl ml-auto block px-4 py-2 font-bold border-gray-500 border-b"
-          onClick={addSubject}
-        >
-          <PlusCircledIcon className="h-6 w-6" />
-        </button>
-        <Table>
-          <TableHeader className="bg-main-yellow">
-            <TableRow>
-              <TableHead className="text-main-blue font-bold">
-                Subject
-              </TableHead>
-              <TableHead className="text-main-blue font-bold">Grade</TableHead>
-              <TableHead className="text-main-blue font-bold">Units</TableHead>
-              <TableHead className="text-main-blue font-bold"></TableHead>{" "}
-              {/* Empty TableHead for Actions */}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="bg-white">
-            {grades.map((grade, index) => (
-              <TableRow key={index}>
-                <TableCell>{grade.subject}</TableCell>
-                <TableCell>
-                  <input
-                    className="px-1 py-2"
-                    type="text"
-                    value={grade.grade}
-                    onChange={(e) => handleGradeChange(index, e.target.value)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <input
-                    className="px-1 py-2"
-                    type="text"
-                    value={grade.units}
-                    onChange={(e) => handleUnitsChange(index, e.target.value)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <button onClick={() => removeSubject(index)}>
-                    <MinusCircledIcon className="h-6 w-6" />
-                  </button>
-                </TableCell>
+    <>
+      <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
+        <h1 className="text-secondary text-6xl font-bold uppercase mb-10 text-white">
+          GWA Calculator
+        </h1>
+        <div className="max-w-2xl mx-auto">
+          {grades.length <= 1 && error && (
+            <Alert variant="destructive" className="mb-4">
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                Cannot remove the last subject.
+              </AlertDescription>
+            </Alert>
+          )}
+          <button
+            className="bg-white rounded-t-xl text-2xl ml-auto block px-4 py-2 font-bold border-gray-500 border-b"
+            onClick={addSubject}
+          >
+            <PlusCircledIcon className="h-6 w-6" />
+          </button>
+          <Table>
+            <TableHeader className="bg-main-yellow">
+              <TableRow>
+                <TableHead className="text-main-blue font-bold">
+                  Subject
+                </TableHead>
+                <TableHead className="text-main-blue font-bold">
+                  Grade
+                </TableHead>
+                <TableHead className="text-main-blue font-bold">
+                  Units
+                </TableHead>
+                <TableHead className="text-main-blue font-bold"></TableHead>{" "}
+                {/* Empty TableHead for Actions */}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <button
-          className="bg-white rounded-xl mt-4 w-full text-main-blue font-bold uppercase px-2 py-4 block text-xl transition-colors duration-300  hover:bg-main-yellow"
-          onClick={calculateGwa}
-        >
-          Calculate
-        </button>
-        <p className="text-white font-bold uppercase text-3xl mt-4">
-          GWA: {gwa}
-        </p>
-      </div>
-    </main>
+            </TableHeader>
+            <TableBody className="bg-white">
+              {grades.map((grade, index) => (
+                <TableRow key={index}>
+                  <TableCell>{grade.subject}</TableCell>
+                  <TableCell>
+                    <input
+                      className="px-1 py-2"
+                      type="text"
+                      value={grade.grade}
+                      onChange={(e) => handleGradeChange(index, e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <input
+                      className="px-1 py-2"
+                      type="text"
+                      value={grade.units}
+                      onChange={(e) => handleUnitsChange(index, e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <button onClick={() => removeSubject(index)}>
+                      <MinusCircledIcon className="h-6 w-6" />
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <button
+            className="bg-white rounded-xl mt-4 w-full text-main-blue font-bold uppercase px-2 py-4 block text-xl transition-colors duration-300  hover:bg-main-yellow disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500 disabled:hover:bg-gray-300"
+            onClick={calculateGwa}
+          >
+            Calculate
+          </button>
+          <p className="text-white font-bold uppercase text-3xl mt-4">
+            GWA: {gwa}
+          </p>
+        </div>
+        <div>
+          <p className="text-white font-bold mt-14">
+            Created with ❤️ by{" "}
+            <a
+              className="text-yellow-300 underline"
+              href="https://felixmacaspac.dev/"
+              target="_blank"
+            >
+              Felix Macaspac
+            </a>
+          </p>
+        </div>
+      </main>
+    </>
   );
 }
