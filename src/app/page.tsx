@@ -147,12 +147,12 @@ export default function Home() {
               <TableBody className="bg-white">
                 {grades.map((grade, index) => (
                   <TableRow key={index}>
-                    <TableCell className="text-nowrap text-center font-bold text-xs">
+                    <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
                       {grade.subject}
                     </TableCell>
                     <TableCell>
                       <input
-                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md"
+                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
                         type="text"
                         value={grade.grade}
                         onChange={(e) =>
@@ -162,7 +162,7 @@ export default function Home() {
                     </TableCell>
                     <TableCell>
                       <input
-                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md"
+                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
                         type="text"
                         value={grade.units}
                         onChange={(e) =>
@@ -193,7 +193,7 @@ export default function Home() {
             </p>
           </div>
           <div className="mx-auto flex justify-center">
-            <p className="text-white font-bold mt-14">
+            <p className="text-white font-medium mt-14">
               Created with ❤️ by{" "}
               <a
                 className="text-yellow-300 underline"
