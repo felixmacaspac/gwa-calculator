@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -8,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
 import {
   ExclamationTriangleIcon,
@@ -46,6 +46,12 @@ export default function Home() {
     localStorage.setItem("grades", JSON.stringify(grades));
   }, [grades]);
 
+  const handleSubjectChnage = (index: number, value: string) => {
+    const updatedGrades = [...grades];
+    updatedGrades[index] = { ...updatedGrades[index], subject: value };
+    setGrades(updatedGrades);
+  }
+  
   // Update grade value for a specific subject
   const handleGradeChange = (index: number, value: number | string) => {
     const updatedGrades = [...grades];
@@ -106,6 +112,85 @@ export default function Home() {
     setError("");
   };
 
+  const SubjectRow = ({grade, index}: {grade: Grade, index: number}) => {
+    const [isEditing, setIsEditing] = useState<boolean>(false)
+
+    const SubjectInput = () => {
+      const [newSubject, setNewSubject] = useState(grade.subject)
+
+      return (
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            if (newSubject.length <= 0) return handleSubjectChnage(index, `Subject ${index + 1}`)
+            handleSubjectChnage(index, newSubject)
+          }}
+        >
+          <input
+            className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
+            type="text"
+            id="subject"
+            name="subject"
+            pattern="^[ A-Za-z0-9_@.\/#&+-]{0,12}$"
+            maxLength={12}
+            autoComplete="off"
+            placeholder={`Subject ${index + 1}`}
+            value={newSubject}
+            autoFocus
+            onChange={(e) =>
+              setNewSubject(e.target.value)
+            }
+          />
+        </form>
+      )
+    }
+
+    return (
+      <TableRow>
+        <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
+          {isEditing
+            ? (<SubjectInput />)
+            : (<span
+                className="hover:cursor-pointer"
+                suppressHydrationWarning
+                onClick={(e) => setIsEditing(true)}
+              >
+                {grade.subject}
+              </span>)
+          }
+        </TableCell>
+        <TableCell>
+          <input
+            className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
+            type="text"
+            value={grade.grade}
+            onChange={(e) =>
+              handleGradeChange(index, e.target.value)
+            }
+          />
+        </TableCell>
+        <TableCell>
+          <input
+            className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
+            type="text"
+            value={grade.units}
+            onChange={(e) =>
+              handleUnitsChange(index, e.target.value)
+            }
+          />
+        </TableCell>
+        <TableCell className="text-center">
+          <button
+            className="bg-red-500 px-4 py-2 text-white font-medium rounded-md"
+            onClick={() => removeSubject(index)}
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
+        </TableCell>
+      </TableRow>
+    )
+  }
+
   return (
     <>
       <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
@@ -146,39 +231,7 @@ export default function Home() {
               </TableHeader>
               <TableBody className="bg-white">
                 {grades.map((grade, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
-                      {grade.subject}
-                    </TableCell>
-                    <TableCell>
-                      <input
-                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
-                        type="text"
-                        value={grade.grade}
-                        onChange={(e) =>
-                          handleGradeChange(index, e.target.value)
-                        }
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <input
-                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
-                        type="text"
-                        value={grade.units}
-                        onChange={(e) =>
-                          handleUnitsChange(index, e.target.value)
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <button
-                        className="bg-red-500 px-4 py-2 text-white font-medium rounded-md"
-                        onClick={() => removeSubject(index)}
-                      >
-                        <TrashIcon className="w-5 h-5" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
+                  <SubjectRow key={index} grade={grade} index={index}/>
                 ))}
               </TableBody>
             </Table>
