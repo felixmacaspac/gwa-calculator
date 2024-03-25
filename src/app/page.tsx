@@ -132,16 +132,15 @@ export default function Home() {
     const SubjectInput = () => {
       const [newSubject, setNewSubject] = useState(grade.subject);
 
-      const handleSubjectBlur = () => {
-        if (newSubject.length <= 0) {
-          handleSubjectChange(index, `Subject ${index + 1}`);
-        } else {
-          handleSubjectChange(index, newSubject);
-        }
-      };
-
       return (
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (newSubject.length <= 0)
+              return handleSubjectChange(index, `Subject ${index + 1}`);
+            handleSubjectChange(index, newSubject);
+          }}
+        >
           <input
             className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
             type="text"
@@ -154,7 +153,6 @@ export default function Home() {
             value={newSubject}
             autoFocus
             onChange={(e) => setNewSubject(e.target.value)}
-            onBlur={handleSubjectBlur}
           />
         </form>
       );
