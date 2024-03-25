@@ -35,14 +35,16 @@ export default function Home() {
       setGrades(JSON.parse(storedGrades));
       return;
     }
-    const defaultGrades = [{
-      subject: "Subject 1",
-      grade: "0",
-      units: "3",
-    }];
-    setGrades(defaultGrades)
+    const defaultGrades = [
+      {
+        subject: "Subject 1",
+        grade: "0",
+        units: "3",
+      },
+    ];
+    setGrades(defaultGrades);
     localStorage.setItem("grades", JSON.stringify(defaultGrades));
-  }, [])
+  }, []);
 
   // Check if `grades` is empty. Otherwise save current grades object to `localStorage`
   useEffect(() => {
@@ -56,8 +58,8 @@ export default function Home() {
     const updatedGrades = [...grades];
     updatedGrades[index] = { ...updatedGrades[index], subject: value };
     setGrades(updatedGrades);
-  }
-  
+  };
+
   // Update grade value for a specific subject
   const handleGradeChange = (index: number, value: number | string) => {
     const updatedGrades = [...grades];
@@ -92,9 +94,9 @@ export default function Home() {
     updatedGrades.splice(index, 1);
     updatedGrades.forEach((grade, index) => {
       if (/Subject [0-9]+/.test(grade.subject)) {
-        grade.subject = `Subject ${index + 1}`
+        grade.subject = `Subject ${index + 1}`;
       }
-    })
+    });
     setGrades(updatedGrades);
   };
 
@@ -118,20 +120,28 @@ export default function Home() {
     setError("");
   };
 
-  const SubjectTableCell = ({grade, index}: {grade: Grade, index: number}) => {
-    const [isEditing, setIsEditing] = useState<boolean>(false)
+  const SubjectTableCell = ({
+    grade,
+    index,
+  }: {
+    grade: Grade;
+    index: number;
+  }) => {
+    const [isEditing, setIsEditing] = useState<boolean>(false);
 
     const SubjectInput = () => {
-      const [newSubject, setNewSubject] = useState(grade.subject)
+      const [newSubject, setNewSubject] = useState(grade.subject);
+
+      const handleSubjectBlur = () => {
+        if (newSubject.length <= 0) {
+          handleSubjectChange(index, `Subject ${index + 1}`);
+        } else {
+          handleSubjectChange(index, newSubject);
+        }
+      };
 
       return (
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            if (newSubject.length <= 0) return handleSubjectChange(index, `Subject ${index + 1}`)
-            handleSubjectChange(index, newSubject)
-          }}
-        >
+        <form onSubmit={(e) => e.preventDefault()}>
           <input
             className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
             type="text"
@@ -143,28 +153,28 @@ export default function Home() {
             placeholder={`Subject ${index + 1}`}
             value={newSubject}
             autoFocus
-            onChange={(e) =>
-              setNewSubject(e.target.value)
-            }
+            onChange={(e) => setNewSubject(e.target.value)}
+            onBlur={handleSubjectBlur}
           />
         </form>
-      )
-    }
+      );
+    };
 
     return (
       <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
-        {isEditing
-          ? (<SubjectInput />)
-          : (<span
-              className="hover:cursor-pointer"
-              onClick={(e) => setIsEditing(true)}
-            >
-              {grade.subject}
-            </span>)
-        }
+        {isEditing ? (
+          <SubjectInput />
+        ) : (
+          <span
+            className="hover:cursor-pointer"
+            onClick={(e) => setIsEditing(true)}
+          >
+            {grade.subject}
+          </span>
+        )}
       </TableCell>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -207,7 +217,7 @@ export default function Home() {
               <TableBody className="bg-white">
                 {grades.map((grade, index) => (
                   <TableRow key={index}>
-                    <SubjectTableCell grade={grade} index={index}/>
+                    <SubjectTableCell grade={grade} index={index} />
                     <TableCell>
                       <input
                         className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
