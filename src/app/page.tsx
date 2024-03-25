@@ -1,5 +1,4 @@
 "use client";
-import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -8,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useEffect, useState } from "react";
 
 import {
   ExclamationTriangleIcon,
@@ -24,28 +24,40 @@ interface Grade {
 }
 
 export default function Home() {
-  const [grades, setGrades] = useState<Grade[]>(() => {
-    if (typeof window !== "undefined") {
-      const storedGrades = localStorage.getItem("grades");
-      if (storedGrades) {
-        return JSON.parse(storedGrades);
-      }
-    }
-    return [
-      {
-        subject: "Subject 1",
-        grade: "0",
-        units: "3",
-      },
-    ];
-  });
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [gwa, setGwa] = useState<number>(0);
   const [error, setError] = useState<string>("");
 
+  // Check `localStorage` if there are any data saved. Otherwise save a default object to storage
   useEffect(() => {
-    localStorage.setItem("grades", JSON.stringify(grades));
+    const storedGrades = localStorage.getItem("grades");
+    if (storedGrades) {
+      setGrades(JSON.parse(storedGrades));
+      return;
+    }
+    const defaultGrades = [{
+      subject: "Subject 1",
+      grade: "0",
+      units: "3",
+    }];
+    setGrades(defaultGrades)
+    localStorage.setItem("grades", JSON.stringify(defaultGrades));
+  }, [])
+
+  // Check if `grades` is empty. Otherwise save current grades object to `localStorage`
+  useEffect(() => {
+    if (grades.length) {
+      localStorage.setItem("grades", JSON.stringify(grades));
+      return;
+    }
   }, [grades]);
 
+  const handleSubjectChange = (index: number, value: string) => {
+    const updatedGrades = [...grades];
+    updatedGrades[index] = { ...updatedGrades[index], subject: value };
+    setGrades(updatedGrades);
+  }
+  
   // Update grade value for a specific subject
   const handleGradeChange = (index: number, value: number | string) => {
     const updatedGrades = [...grades];
@@ -78,12 +90,12 @@ export default function Home() {
     }
     const updatedGrades = [...grades];
     updatedGrades.splice(index, 1);
-    setGrades(
-      updatedGrades.map((grade, i) => ({
-        ...grade,
-        subject: `Subject ${i + 1}`,
-      }))
-    );
+    updatedGrades.forEach((grade, index) => {
+      if (/Subject [0-9]+/.test(grade.subject)) {
+        grade.subject = `Subject ${index + 1}`
+      }
+    })
+    setGrades(updatedGrades);
   };
 
   // Calculate the GWA
@@ -105,6 +117,54 @@ export default function Home() {
     setGwa(Number(calculatedGwa.toFixed(2))); // Limit to 2 decimal places
     setError("");
   };
+
+  const SubjectTableCell = ({grade, index}: {grade: Grade, index: number}) => {
+    const [isEditing, setIsEditing] = useState<boolean>(false)
+
+    const SubjectInput = () => {
+      const [newSubject, setNewSubject] = useState(grade.subject)
+
+      return (
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            if (newSubject.length <= 0) return handleSubjectChange(index, `Subject ${index + 1}`)
+            handleSubjectChange(index, newSubject)
+          }}
+        >
+          <input
+            className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
+            type="text"
+            id="subject"
+            name="subject"
+            pattern="^[ A-Za-z0-9_?@.\/#&+\-]{0,12}$"
+            maxLength={12}
+            autoComplete="off"
+            placeholder={`Subject ${index + 1}`}
+            value={newSubject}
+            autoFocus
+            onChange={(e) =>
+              setNewSubject(e.target.value)
+            }
+          />
+        </form>
+      )
+    }
+
+    return (
+      <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
+        {isEditing
+          ? (<SubjectInput />)
+          : (<span
+              className="hover:cursor-pointer"
+              onClick={(e) => setIsEditing(true)}
+            >
+              {grade.subject}
+            </span>)
+        }
+      </TableCell>
+    )
+  }
 
   return (
     <>
@@ -147,9 +207,7 @@ export default function Home() {
               <TableBody className="bg-white">
                 {grades.map((grade, index) => (
                   <TableRow key={index}>
-                    <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
-                      {grade.subject}
-                    </TableCell>
+                    <SubjectTableCell grade={grade} index={index}/>
                     <TableCell>
                       <input
                         className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
