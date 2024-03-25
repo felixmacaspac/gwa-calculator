@@ -24,29 +24,35 @@ interface Grade {
 }
 
 export default function Home() {
-  const [grades, setGrades] = useState<Grade[]>(() => {
-    if (typeof window !== "undefined") {
-      const storedGrades = localStorage.getItem("grades");
-      if (storedGrades) {
-        return JSON.parse(storedGrades);
-      }
-    }
-    return [
-      {
-        subject: "Subject 1",
-        grade: "0",
-        units: "3",
-      },
-    ];
-  });
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [gwa, setGwa] = useState<number>(0);
   const [error, setError] = useState<string>("");
 
+  // Check `localStorage` if there are any data saved. Otherwise save a default object to storage
   useEffect(() => {
-    localStorage.setItem("grades", JSON.stringify(grades));
+    const storedGrades = localStorage.getItem("grades");
+    if (storedGrades) {
+      setGrades(JSON.parse(storedGrades));
+      return;
+    }
+    const defaultGrades = [{
+      subject: "Subject 1",
+      grade: "0",
+      units: "3",
+    }];
+    setGrades(defaultGrades)
+    localStorage.setItem("grades", JSON.stringify(defaultGrades));
+  }, [])
+
+  // Check if `grades` is empty. Otherwise save current grades object to `localStorage`
+  useEffect(() => {
+    if (grades.length) {
+      localStorage.setItem("grades", JSON.stringify(grades));
+      return;
+    }
   }, [grades]);
 
-  const handleSubjectChnage = (index: number, value: string) => {
+  const handleSubjectChange = (index: number, value: string) => {
     const updatedGrades = [...grades];
     updatedGrades[index] = { ...updatedGrades[index], subject: value };
     setGrades(updatedGrades);
@@ -112,7 +118,7 @@ export default function Home() {
     setError("");
   };
 
-  const SubjectRow = ({grade, index}: {grade: Grade, index: number}) => {
+  const SubjectTableCell = ({grade, index}: {grade: Grade, index: number}) => {
     const [isEditing, setIsEditing] = useState<boolean>(false)
 
     const SubjectInput = () => {
@@ -122,8 +128,8 @@ export default function Home() {
         <form
           onSubmit={e => {
             e.preventDefault();
-            if (newSubject.length <= 0) return handleSubjectChnage(index, `Subject ${index + 1}`)
-            handleSubjectChnage(index, newSubject)
+            if (newSubject.length <= 0) return handleSubjectChange(index, `Subject ${index + 1}`)
+            handleSubjectChange(index, newSubject)
           }}
         >
           <input
@@ -131,7 +137,7 @@ export default function Home() {
             type="text"
             id="subject"
             name="subject"
-            pattern="^[ A-Za-z0-9_@.\/#&+-]{0,12}$"
+            pattern="^[ A-Za-z0-9_?@.\/#&+\-]{0,12}$"
             maxLength={12}
             autoComplete="off"
             placeholder={`Subject ${index + 1}`}
@@ -146,48 +152,17 @@ export default function Home() {
     }
 
     return (
-      <TableRow>
-        <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
-          {isEditing
-            ? (<SubjectInput />)
-            : (<span
-                className="hover:cursor-pointer"
-                suppressHydrationWarning
-                onClick={(e) => setIsEditing(true)}
-              >
-                {grade.subject}
-              </span>)
-          }
-        </TableCell>
-        <TableCell>
-          <input
-            className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
-            type="text"
-            value={grade.grade}
-            onChange={(e) =>
-              handleGradeChange(index, e.target.value)
-            }
-          />
-        </TableCell>
-        <TableCell>
-          <input
-            className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
-            type="text"
-            value={grade.units}
-            onChange={(e) =>
-              handleUnitsChange(index, e.target.value)
-            }
-          />
-        </TableCell>
-        <TableCell className="text-center">
-          <button
-            className="bg-red-500 px-4 py-2 text-white font-medium rounded-md"
-            onClick={() => removeSubject(index)}
-          >
-            <TrashIcon className="w-5 h-5" />
-          </button>
-        </TableCell>
-      </TableRow>
+      <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
+        {isEditing
+          ? (<SubjectInput />)
+          : (<span
+              className="hover:cursor-pointer"
+              onClick={(e) => setIsEditing(true)}
+            >
+              {grade.subject}
+            </span>)
+        }
+      </TableCell>
     )
   }
 
@@ -231,7 +206,37 @@ export default function Home() {
               </TableHeader>
               <TableBody className="bg-white">
                 {grades.map((grade, index) => (
-                  <SubjectRow key={index} grade={grade} index={index}/>
+                  <TableRow key={index}>
+                    <SubjectTableCell grade={grade} index={index}/>
+                    <TableCell>
+                      <input
+                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
+                        type="text"
+                        value={grade.grade}
+                        onChange={(e) =>
+                          handleGradeChange(index, e.target.value)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <input
+                        className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
+                        type="text"
+                        value={grade.units}
+                        onChange={(e) =>
+                          handleUnitsChange(index, e.target.value)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button
+                        className="bg-red-500 px-4 py-2 text-white font-medium rounded-md"
+                        onClick={() => removeSubject(index)}
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
