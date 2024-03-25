@@ -90,12 +90,12 @@ export default function Home() {
     }
     const updatedGrades = [...grades];
     updatedGrades.splice(index, 1);
-    setGrades(
-      updatedGrades.map((grade, i) => ({
-        ...grade,
-        subject: `Subject ${i + 1}`,
-      }))
-    );
+    updatedGrades.forEach((grade, index) => {
+      if (/Subject [0-9]+/.test(grade.subject)) {
+        grade.subject = `Subject ${index + 1}`
+      }
+    })
+    setGrades(updatedGrades);
   };
 
   // Calculate the GWA
