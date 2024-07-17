@@ -8,13 +8,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Fireworks from "react-canvas-confetti/dist/presets/fireworks";
 
 import {
   ExclamationTriangleIcon,
   PlusCircledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Grade {
@@ -27,6 +28,7 @@ export default function Home() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [gwa, setGwa] = useState<number>(0);
   const [error, setError] = useState<string>("");
+  const [showConfetti, setShowConfetti] = useState<boolean>(false);
 
   // Check `localStorage` if there are any data saved. Otherwise save a default object to storage
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function Home() {
   // Remove a subject
   const removeSubject = (index: number) => {
     if (grades.length === 1) {
-      setError("There should be atleast 1 subject");
+      setError("There should be at least 1 subject");
       return;
     }
     const updatedGrades = [...grades];
@@ -118,6 +120,19 @@ export default function Home() {
     const calculatedGwa = totalGradePoints / totalUnits;
     setGwa(Number(calculatedGwa.toFixed(2))); // Limit to 2 decimal places
     setError("");
+
+    // Show confetti if the user is on the Dean's List
+    if (calculatedGwa >= 3.25) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000); // Hide confetti after 5 seconds
+    }
+  };
+
+  const getDeansList = (gwa: number) => {
+    if (gwa >= 3.5) return "Congrats! You're on the Dean's First Honors List";
+    if (gwa >= 3.25 && gwa <= 3.49)
+      return "Congrats! You're on the Dean's Second Honors List";
+    return "";
   };
 
   const SubjectTableCell = ({
@@ -174,47 +189,56 @@ export default function Home() {
     );
   };
 
+  const deansListText = getDeansList(gwa);
+
   return (
-    <>
-      <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
-        <h1 className="text-secondary text-2xl font-bold uppercase mb-4 lg:mb-10 text-white lg:text-6xl">
-          GWA Calculator
-        </h1>
-        <div className="container px-4 max-w-[1200px]">
-          <div className="w-full max-w-full lg:max-w-2xl mx-auto">
-            {grades.length <= 1 && error && (
-              <Alert variant="destructive" className="mb-4">
-                <ExclamationTriangleIcon className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  Cannot remove the last subject.
-                </AlertDescription>
-              </Alert>
-            )}
-            <button
-              className="bg-white rounded-t-xl text-2xl ml-auto block px-4 py-2 font-bold border-gray-500 border-b"
-              onClick={addSubject}
-            >
-              <PlusCircledIcon className="h-6 w-6" />
-            </button>
-            <Table className="table-fixed table">
-              <TableHeader className="bg-main-yellow text-center align-middle sticky top-0">
-                <TableRow className="w-full">
-                  <TableHead className="text-main-blue font-bold text-center">
-                    Subject
-                  </TableHead>
-                  <TableHead className="text-main-blue font-bold text-center">
-                    Grade
-                  </TableHead>
-                  <TableHead className="text-main-blue font-bold text-center">
-                    Units
-                  </TableHead>
-                  <TableHead className="text-main-blue font-bold mx-auto"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="bg-white">
+    <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
+      {showConfetti && <Fireworks autorun={{ speed: 3, duration: 5000 }} />}
+      <h1 className="text-secondary text-2xl font-bold uppercase mb-4 lg:mb-10 text-white lg:text-6xl">
+        GWA Calculator
+      </h1>
+      <div className="container px-4 max-w-[1200px]">
+        <div className="w-full max-w-full lg:max-w-2xl mx-auto blur-background">
+          {grades.length <= 1 && error && (
+            <Alert variant="destructive" className="mb-4">
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                Cannot remove the last subject.
+              </AlertDescription>
+            </Alert>
+          )}
+          <button
+            className="bg-white rounded-t-xl text-2xl ml-auto block px-4 py-2 font-bold border-gray-500 border-b"
+            onClick={addSubject}
+          >
+            <PlusCircledIcon className="h-6 w-6" />
+          </button>
+          <Table className="table-fixed table">
+            <TableHeader className="bg-main-yellow text-center align-middle sticky top-0">
+              <TableRow className="w-full">
+                <TableHead className="text-main-blue font-bold text-center">
+                  Subject
+                </TableHead>
+                <TableHead className="text-main-blue font-bold text-center">
+                  Grade
+                </TableHead>
+                <TableHead className="text-main-blue font-bold text-center">
+                  Units
+                </TableHead>
+                <TableHead className="text-main-blue font-bold mx-auto"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="bg-white">
+              <AnimatePresence>
                 {grades.map((grade, index) => (
-                  <TableRow key={index}>
+                  <motion.tr
+                    key={index}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                  >
                     <SubjectTableCell grade={grade} index={index} />
                     <TableCell>
                       <input
@@ -244,34 +268,57 @@ export default function Home() {
                         <TrashIcon className="w-5 h-5" />
                       </button>
                     </TableCell>
-                  </TableRow>
+                  </motion.tr>
                 ))}
-              </TableBody>
-            </Table>
-            <button
-              className="bg-white rounded-xl mt-4 w-full text-main-blue font-bold uppercase px-2 py-4 block text-xl transition-colors duration-300  hover:bg-main-yellow disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500 disabled:hover:bg-gray-300"
-              onClick={calculateGwa}
-            >
-              Calculate
-            </button>
-            <p className="text-white font-bold uppercase text-xl lg:text-3xl mt-4">
-              GWA: {gwa}
-            </p>
-          </div>
-          <div className="mx-auto flex justify-center">
-            <p className="text-white font-medium mt-14">
-              Created with ❤️ by{" "}
-              <a
-                className="text-yellow-300 underline"
-                href="https://felixmacaspac.dev/"
-                target="_blank"
-              >
-                Felix Macaspac
-              </a>
-            </p>
-          </div>
+              </AnimatePresence>
+            </TableBody>
+          </Table>
+          <button
+            className="bg-white rounded-xl mt-4 w-full text-main-blue font-bold uppercase px-2 py-4 block text-xl transition-colors duration-300 hover:bg-main-yellow disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500 disabled:hover:bg-gray-300"
+            onClick={calculateGwa}
+          >
+            Calculate
+          </button>
+          <AnimatePresence>
+            {gwa > 0 && (
+              <div className="relative bg-white/15 px-6 py-4 mt-6 rounded-xl">
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-white font-bold uppercase text-xl lg:text-3xl"
+                >
+                  GWA: {gwa}
+                </motion.p>
+                {deansListText && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-white font-medium italic text-sm lg:text-lg mt-2"
+                  >
+                    {deansListText}
+                  </motion.p>
+                )}
+              </div>
+            )}
+          </AnimatePresence>
         </div>
-      </main>
-    </>
+        <div className="mx-auto flex justify-center bg-main-yellow fixed bottom-0 right-0 rounded-tl-3xl">
+          <p className="text-primary font-medium px-8 py-4">
+            Created with ❤️ by{" "}
+            <a
+              className="text-primary border-primary border-b-2"
+              href="https://felixmacaspac.dev/"
+              target="_blank"
+            >
+              Felix Macaspac
+            </a>
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }
