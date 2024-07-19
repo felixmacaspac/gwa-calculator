@@ -17,7 +17,6 @@ import {
   TrashIcon,
 } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
 interface Grade {
   subject: string;
   grade: number | string;
@@ -306,8 +305,8 @@ export default function Home() {
             )}
           </AnimatePresence>
         </div>
-        <div className="mx-auto flex justify-center bg-main-yellow fixed bottom-0 right-0 rounded-tl-3xl">
-          <p className="text-primary font-medium px-8 py-4">
+        <div className="mx-auto flex items-center gap-4 justify-center bg-white fixed bottom-0 right-0 rounded-tl-3xl">
+          <p className="text-primary font-medium pl-8 py-4 text-xs lg:text-base">
             Created with ❤️ by{" "}
             <a
               className="text-primary border-primary border-b-2"
@@ -317,6 +316,19 @@ export default function Home() {
               Felix Macaspac
             </a>
           </p>
+          <a
+            className="mr-8"
+            href="https://www.buymeacoffee.com/felixmacaspac"
+            target="_blank"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+              alt="Buy Me A Coffee"
+              width={140}
+              height={50}
+            />
+          </a>
         </div>
       </div>
     </main>
