@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   robots: "index, follow",
-  viewport: "width=device-width, initial-scale=1",
+  metadataBase: new URL("https://gwa-calculator-fm.vercel.app/"),
 };
 
 export default function RootLayout({
