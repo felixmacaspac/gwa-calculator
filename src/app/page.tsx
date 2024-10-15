@@ -17,8 +17,9 @@ import {
   TrashIcon,
 } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 interface Grade {
-  subject: string;
+  course: string;
   grade: number | string;
   units: number | string;
 }
@@ -29,82 +30,81 @@ export default function Home() {
   const [error, setError] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
 
-  // Check `localStorage` if there are any data saved. Otherwise save a default object to storage
   useEffect(() => {
     const storedGrades = localStorage.getItem("grades");
     if (storedGrades) {
-      setGrades(JSON.parse(storedGrades));
-      return;
+      const parsedGrades = JSON.parse(storedGrades);
+      // Check if the stored data uses the old "subject" key
+      const migratedGrades = parsedGrades.map((grade: any) => ({
+        course: grade.subject || grade.course,
+        grade: grade.grade,
+        units: grade.units,
+      }));
+      setGrades(migratedGrades);
+    } else {
+      const defaultGrades = [
+        {
+          course: "Course 1",
+          grade: "0",
+          units: "3",
+        },
+      ];
+      setGrades(defaultGrades);
+      localStorage.setItem("grades", JSON.stringify(defaultGrades));
     }
-    const defaultGrades = [
-      {
-        subject: "Subject 1",
-        grade: "0",
-        units: "3",
-      },
-    ];
-    setGrades(defaultGrades);
-    localStorage.setItem("grades", JSON.stringify(defaultGrades));
   }, []);
 
-  // Check if `grades` is empty. Otherwise save current grades object to `localStorage`
   useEffect(() => {
     if (grades.length) {
       localStorage.setItem("grades", JSON.stringify(grades));
-      return;
     }
   }, [grades]);
 
-  const handleSubjectChange = (index: number, value: string) => {
+  const handleCourseChange = (index: number, value: string) => {
     const updatedGrades = [...grades];
-    updatedGrades[index] = { ...updatedGrades[index], subject: value };
+    updatedGrades[index] = { ...updatedGrades[index], course: value };
     setGrades(updatedGrades);
   };
 
-  // Update grade value for a specific subject
   const handleGradeChange = (index: number, value: number | string) => {
     const updatedGrades = [...grades];
     updatedGrades[index] = { ...updatedGrades[index], grade: value };
     setGrades(updatedGrades);
   };
 
-  // Update units value for a specific subject
   const handleUnitsChange = (index: number, value: number | string) => {
     const updatedGrades = [...grades];
     updatedGrades[index] = { ...updatedGrades[index], units: value };
     setGrades(updatedGrades);
   };
 
-  // Add a new subject
-  const addSubject = () => {
-    const newSubject: Grade = {
-      subject: `Subject ${grades.length + 1}`,
+  const addCourse = () => {
+    const newCourse: Grade = {
+      course: `Course ${grades.length + 1}`,
       grade: "0",
       units: "3",
     };
-    setGrades([...grades, newSubject]);
+    setGrades([...grades, newCourse]);
   };
 
-  // Remove a subject
-  const removeSubject = (index: number) => {
+  const removeCourse = (index: number) => {
     if (grades.length === 1) {
-      setError("There should be at least 1 subject");
+      setError("There should be at least 1 course");
       return;
     }
     const updatedGrades = [...grades];
     updatedGrades.splice(index, 1);
     updatedGrades.forEach((grade, index) => {
-      if (/Subject [0-9]+/.test(grade.subject)) {
-        grade.subject = `Subject ${index + 1}`;
+      if (/Course [0-9]+/.test(grade.course)) {
+        grade.course = `Course ${index + 1}`;
       }
     });
     setGrades(updatedGrades);
   };
 
-  // Calculate the GWA
   const calculateGwa = () => {
     if (grades.length === 0) {
-      setError("Please add at least one subject");
+      setError("Please add at least one course");
       return;
     }
 
@@ -117,13 +117,12 @@ export default function Home() {
     });
 
     const calculatedGwa = totalGradePoints / totalUnits;
-    setGwa(Number(calculatedGwa.toFixed(2))); // Limit to 2 decimal places
+    setGwa(Number(calculatedGwa.toFixed(2)));
     setError("");
 
-    // Show confetti if the user is on the Dean's List
     if (calculatedGwa >= 3.25) {
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000); // Hide confetti after 5 seconds
+      setTimeout(() => setShowConfetti(false), 5000);
     }
   };
 
@@ -134,7 +133,7 @@ export default function Home() {
     return "";
   };
 
-  const SubjectTableCell = ({
+  const CourseTableCell = ({
     grade,
     index,
   }: {
@@ -143,30 +142,30 @@ export default function Home() {
   }) => {
     const [isEditing, setIsEditing] = useState<boolean>(false);
 
-    const SubjectInput = () => {
-      const [newSubject, setNewSubject] = useState(grade.subject);
+    const CourseInput = () => {
+      const [newCourse, setNewCourse] = useState(grade.course);
 
       return (
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (newSubject.length <= 0)
-              return handleSubjectChange(index, `Subject ${index + 1}`);
-            handleSubjectChange(index, newSubject);
+            if (newCourse.length <= 0)
+              return handleCourseChange(index, `Course ${index + 1}`);
+            handleCourseChange(index, newCourse);
           }}
         >
           <input
             className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
             type="text"
-            id="subject"
-            name="subject"
+            id="course"
+            name="course"
             pattern="^[ A-Za-z0-9_?@.\/#&+\-]{0,12}$"
             maxLength={12}
             autoComplete="off"
-            placeholder={`Subject ${index + 1}`}
-            value={newSubject}
+            placeholder={`Course ${index + 1}`}
+            value={newCourse}
             autoFocus
-            onChange={(e) => setNewSubject(e.target.value)}
+            onChange={(e) => setNewCourse(e.target.value)}
           />
         </form>
       );
@@ -175,13 +174,13 @@ export default function Home() {
     return (
       <TableCell className="text-nowrap text-center font-medium text-xs lg:text-sm">
         {isEditing ? (
-          <SubjectInput />
+          <CourseInput />
         ) : (
           <span
-            className="hover:cursor-pointer"
+            className="hover:cursor-pointer text-sm lg:text-base"
             onClick={(e) => setIsEditing(true)}
           >
-            {grade.subject}
+            {grade.course}
           </span>
         )}
       </TableCell>
@@ -193,31 +192,80 @@ export default function Home() {
   return (
     <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
       {showConfetti && <Fireworks autorun={{ speed: 3, duration: 5000 }} />}
-      <h1 className="text-secondary text-2xl font-bold uppercase mb-4 lg:mb-10 text-white lg:text-6xl">
-        GWA Calculator
-      </h1>
-      <div className="container px-4 max-w-[1200px]">
-        <div className="w-full max-w-full lg:max-w-2xl mx-auto blur-background">
+      <div className="container px-4 lg:max-w-[1200px] place-items-baseline grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-10">
+        <div>
+          <h1 className="text-secondary text-3xl font-bold uppercasetext-white flex lg:text-4xl">
+            NU GWA Calculator
+          </h1>
+          <div className="mt-4">
+            <span className="block text-neutral-100 text-lg">
+              About the creator:
+            </span>
+            <article className="text-neutral-200 mt-2">
+              <p>
+                Hi! 👋 {"I'm "}
+                <a
+                  className="underline font-semibold transition-colors duration-300 ease-in-out hover:text-main-yellow"
+                  href="https://felixmacaspac.dev/"
+                >
+                  Felix Macaspac
+                </a>
+                , currently a 3rd year BSCS-ML student at NU Dasma. If{" "}
+                {"you're"} interested in applications like this, I recently
+                created one that can help NU students access and contribute to
+                various learning resources. {"It's"} called {""}
+                <a
+                  className="group inline-flex items-center underline font-semibold transition-colors duration-300 ease-in-out hover:text-main-yellow"
+                  href="https://enyunotes-fm.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  enyunotes
+                  <svg
+                    className="w-4 h-4 transition-colors duration-300 ease-in-out stroke-current group-hover:text-main-yellow text-white"
+                    width="800px"
+                    height="800px"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="Interface / External_Link">
+                      <path
+                        id="Vector"
+                        d="M10.0002 5H8.2002C7.08009 5 6.51962 5 6.0918 5.21799C5.71547 5.40973 5.40973 5.71547 5.21799 6.0918C5 6.51962 5 7.08009 5 8.2002V15.8002C5 16.9203 5 17.4801 5.21799 17.9079C5.40973 18.2842 5.71547 18.5905 6.0918 18.7822C6.5192 19 7.07899 19 8.19691 19H15.8031C16.921 19 17.48 19 17.9074 18.7822C18.2837 18.5905 18.5905 18.2839 18.7822 17.9076C19 17.4802 19 16.921 19 15.8031V14M20 9V4M20 4H15M20 4L13 11"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </g>
+                  </svg>
+                </a>
+              </p>
+            </article>
+          </div>
+        </div>
+        <div className="w-full col-span-2 max-w-full lg:max-w-2xl mx-auto blur-background">
           {grades.length <= 1 && error && (
             <Alert variant="destructive" className="mb-4">
               <ExclamationTriangleIcon className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>
-                Cannot remove the last subject.
+                Cannot remove the last course.
               </AlertDescription>
             </Alert>
           )}
           <button
             className="bg-white rounded-t-xl text-2xl ml-auto block px-4 py-2 font-bold border-gray-500 border-b"
-            onClick={addSubject}
+            onClick={addCourse}
           >
             <PlusCircledIcon className="h-6 w-6" />
           </button>
-          <Table className="table-fixed table">
+          <Table className="table-fixed table text-base">
             <TableHeader className="bg-main-yellow text-center align-middle sticky top-0">
               <TableRow className="w-full">
                 <TableHead className="text-main-blue font-bold text-center">
-                  Subject
+                  Course
                 </TableHead>
                 <TableHead className="text-main-blue font-bold text-center">
                   Grade
@@ -238,7 +286,7 @@ export default function Home() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <SubjectTableCell grade={grade} index={index} />
+                    <CourseTableCell grade={grade} index={index} />
                     <TableCell>
                       <input
                         className="px-1 py-2 w-full outline-gray-300 outline-1 outline text-center rounded-md focus-within:outline-blue-500 focus-within:outline-1 transition-colors duration-300"
@@ -262,7 +310,7 @@ export default function Home() {
                     <TableCell className="text-center">
                       <button
                         className="bg-red-500 px-4 py-2 text-white font-medium rounded-md"
-                        onClick={() => removeSubject(index)}
+                        onClick={() => removeCourse(index)}
                       >
                         <TrashIcon className="w-5 h-5" />
                       </button>
@@ -304,31 +352,6 @@ export default function Home() {
               </div>
             )}
           </AnimatePresence>
-        </div>
-        <div className="mx-auto flex items-center gap-4 justify-center bg-white fixed bottom-0 right-0 rounded-tl-3xl">
-          <p className="text-primary font-medium pl-8 py-4 text-xs lg:text-base">
-            Created with ❤️ by{" "}
-            <a
-              className="text-primary border-primary border-b-2"
-              href="https://felixmacaspac.dev/"
-              target="_blank"
-            >
-              Felix Macaspac
-            </a>
-          </p>
-          <a
-            className="mr-8"
-            href="https://www.buymeacoffee.com/felixmacaspac"
-            target="_blank"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
-              alt="Buy Me A Coffee"
-              width={140}
-              height={50}
-            />
-          </a>
         </div>
       </div>
     </main>
