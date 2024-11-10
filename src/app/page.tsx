@@ -28,6 +28,7 @@ export default function Home() {
   const [grades, setGrades] = useState<Grade[]>([]);
   const [gwa, setGwa] = useState<number>(0);
   const [error, setError] = useState<string>("");
+  const [deansListText, setDeansListText] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
 
   useEffect(() => {
@@ -110,26 +111,46 @@ export default function Home() {
 
     let totalGradePoints = 0;
     let totalUnits = 0;
+    let hasLowGrade = false;
 
     grades.forEach((grade) => {
-      totalGradePoints += Number(grade.grade) * Number(grade.units);
-      totalUnits += Number(grade.units);
+      const gradeValue = Number(grade.grade);
+      const unitsValue = Number(grade.units);
+
+      totalGradePoints += gradeValue * unitsValue;
+      totalUnits += unitsValue;
+
+      if (gradeValue < 2.5) {
+        hasLowGrade = true;
+      }
     });
 
     const calculatedGwa = totalGradePoints / totalUnits;
     setGwa(Number(calculatedGwa.toFixed(2)));
     setError("");
 
-    if (calculatedGwa >= 3.25) {
+    if (calculatedGwa >= 3.25 && !hasLowGrade) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
     }
+    setDeansListText(getDeansList(calculatedGwa));
   };
 
   const getDeansList = (gwa: number) => {
-    if (gwa >= 3.5) return "Congrats! You're on the Dean's First Honors List";
-    if (gwa >= 3.25 && gwa <= 3.49)
+    const hasLowGrade = grades.some((grade) => Number(grade.grade) < 2.5);
+
+    if (gwa >= 3.25) {
+      if (hasLowGrade) {
+        return "You did well, but you have a grade below 2.5, which disqualifies you from the Dean's List. Bawi next sem! :D";
+      }
+      if (gwa >= 3.5) {
+        return "Congrats! You're on the Dean's First Honors List";
+      }
       return "Congrats! You're on the Dean's Second Honors List";
+    } else if (gwa < 3.25) {
+      return "You need a GWA of at least 3.25 and no grades below 2.5 to qualify for the Dean's List, Bawi next sem! :D";
+    }
+
     return "";
   };
 
@@ -186,8 +207,6 @@ export default function Home() {
       </TableCell>
     );
   };
-
-  const deansListText = getDeansList(gwa);
 
   return (
     <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
