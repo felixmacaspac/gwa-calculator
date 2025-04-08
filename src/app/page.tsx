@@ -17,6 +17,8 @@ import {
   TrashIcon,
 } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShareButton } from "@/components/ui/share-button";
+import { ShareData, decodeShareData } from "@/lib/utils";
 
 interface Grade {
   course: string;
@@ -30,8 +32,31 @@ export default function Home() {
   const [error, setError] = useState<string>("");
   const [deansListText, setDeansListText] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
-
   useEffect(() => {
+    // Check for shared results in URL parameters
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedData = urlParams.get('shared');
+      
+      if (sharedData) {
+        const decodedData = decodeShareData(sharedData);
+        if (decodedData) {
+          // Set data from shared link
+          setGrades(decodedData.grades);
+          setGwa(decodedData.gwa);
+          setDeansListText(decodedData.deansListText);
+          
+          // Remove the query parameter to avoid reloading shared data
+          // after the user makes changes
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+          
+          return; // Skip loading from localStorage if we loaded shared data
+        }
+      }
+    }
+    
+    // If no shared data, load from localStorage as usual
     const storedGrades = localStorage.getItem("grades");
     if (storedGrades) {
       const parsedGrades = JSON.parse(storedGrades);
@@ -368,10 +393,27 @@ export default function Home() {
                     {deansListText}
                   </motion.p>
                 )}
+                
+                {/* Share Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="mt-4"
+                >
+                  <ShareButton 
+                    data={{
+                      grades,
+                      gwa,
+                      deansListText
+                    }}
+                    className="w-full md:w-auto"
+                  />
+                </motion.div>
               </div>
             )}
           </AnimatePresence>
-        </div>
       </div>
     </main>
   );
