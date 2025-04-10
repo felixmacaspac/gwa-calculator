@@ -10,15 +10,16 @@ import {
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Fireworks from "react-canvas-confetti/dist/presets/fireworks";
+import { useSearchParams, usePathname } from "next/navigation";
 
 import {
   ExclamationTriangleIcon,
   PlusCircledIcon,
   TrashIcon,
+  Share1Icon,
+  CheckIcon,
 } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShareButton } from "@/components/ui/share-button";
-import { ShareData, decodeShareData } from "@/lib/utils";
 
 interface Grade {
   course: string;
@@ -32,31 +33,40 @@ export default function Home() {
   const [error, setError] = useState<string>("");
   const [deansListText, setDeansListText] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [linkCopied, setLinkCopied] = useState<boolean>(false);
+
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   useEffect(() => {
-    // Check for shared results in URL parameters
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const sharedData = urlParams.get('shared');
-      
-      if (sharedData) {
-        const decodedData = decodeShareData(sharedData);
-        if (decodedData) {
-          // Set data from shared link
-          setGrades(decodedData.grades);
-          setGwa(decodedData.gwa);
-          setDeansListText(decodedData.deansListText);
-          
-          // Remove the query parameter to avoid reloading shared data
-          // after the user makes changes
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, document.title, newUrl);
-          
-          return; // Skip loading from localStorage if we loaded shared data
+    // First check if grades are in URL parameters
+    const gradesParam = searchParams.get("grades");
+
+    if (gradesParam) {
+      try {
+        const decodedGrades = JSON.parse(decodeURIComponent(gradesParam));
+        if (Array.isArray(decodedGrades) && decodedGrades.length > 0) {
+          setGrades(decodedGrades);
+          // Calculate GWA automatically when loading from shared link
+          const totalGradePoints = decodedGrades.reduce(
+            (sum, grade) => sum + Number(grade.grade) * Number(grade.units),
+            0
+          );
+          const totalUnits = decodedGrades.reduce(
+            (sum, grade) => sum + Number(grade.units),
+            0
+          );
+          const calculatedGwa = totalGradePoints / totalUnits;
+          setGwa(Number(calculatedGwa.toFixed(2)));
+          setDeansListText(getDeansList(calculatedGwa));
+          return;
         }
+      } catch (e) {
+        console.error("Error parsing grades from URL", e);
       }
     }
-    
-    // If no shared data, load from localStorage as usual
+
+    // If no URL parameters, check localStorage
     const storedGrades = localStorage.getItem("grades");
     if (storedGrades) {
       const parsedGrades = JSON.parse(storedGrades);
@@ -78,7 +88,7 @@ export default function Home() {
       setGrades(defaultGrades);
       localStorage.setItem("grades", JSON.stringify(defaultGrades));
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (grades.length) {
@@ -154,6 +164,14 @@ export default function Home() {
     setGwa(Number(calculatedGwa.toFixed(2)));
     setError("");
 
+    // Update URL with grades for sharing
+    const params = new URLSearchParams();
+    params.set("grades", encodeURIComponent(JSON.stringify(grades)));
+
+    // Update browser URL without page reload
+    const newUrl = `${pathname}?${params.toString()}`;
+    window.history.pushState({}, "", newUrl);
+
     if (calculatedGwa >= 3.25 && !hasLowGrade) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
@@ -179,6 +197,17 @@ export default function Home() {
     return "";
   };
 
+  const copyShareLink = () => {
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 3000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy link: ", err);
+      });
+  };
   const CourseTableCell = ({
     grade,
     index,
@@ -373,15 +402,37 @@ export default function Home() {
           <AnimatePresence>
             {gwa > 0 && (
               <div className="relative bg-white/15 px-6 py-4 mt-6 rounded-xl">
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-white font-bold uppercase text-xl lg:text-3xl"
-                >
-                  GWA: {gwa}
-                </motion.p>
+                <div className="flex items-center justify-between">
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-white font-bold uppercase text-xl lg:text-3xl"
+                  >
+                    GWA: {gwa}
+                  </motion.p>
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    onClick={copyShareLink}
+                    className="flex items-center bg-main-yellow text-main-blue px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 hover:bg-white"
+                  >
+                    {linkCopied ? (
+                      <>
+                        <CheckIcon className="mr-1 h-4 w-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Share1Icon className="mr-1 h-4 w-4" />
+                        Share Result
+                      </>
+                    )}
+                  </motion.button>
+                </div>
                 {deansListText && (
                   <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -393,27 +444,10 @@ export default function Home() {
                     {deansListText}
                   </motion.p>
                 )}
-                
-                {/* Share Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="mt-4"
-                >
-                  <ShareButton 
-                    data={{
-                      grades,
-                      gwa,
-                      deansListText
-                    }}
-                    className="w-full md:w-auto"
-                  />
-                </motion.div>
               </div>
             )}
           </AnimatePresence>
+        </div>
       </div>
     </main>
   );
