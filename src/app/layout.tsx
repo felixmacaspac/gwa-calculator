@@ -45,11 +45,6 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7606807849020132"
-          crossOrigin="anonymous"
-        ></script>
       </head>
       <body className={leagueSpartan.className}>
         {children}
