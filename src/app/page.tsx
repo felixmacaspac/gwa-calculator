@@ -16,8 +16,6 @@ import {
   ExclamationTriangleIcon,
   PlusCircledIcon,
   TrashIcon,
-  Share1Icon,
-  CheckIcon,
 } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -197,17 +195,6 @@ export default function Home() {
     return "";
   };
 
-  const copyShareLink = () => {
-    navigator.clipboard
-      .writeText(window.location.href)
-      .then(() => {
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 3000);
-      })
-      .catch((err) => {
-        console.error("Failed to copy link: ", err);
-      });
-  };
   const CourseTableCell = ({
     grade,
     index,
@@ -412,26 +399,6 @@ export default function Home() {
                   >
                     GWA: {gwa}
                   </motion.p>
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    onClick={copyShareLink}
-                    className="flex items-center bg-main-yellow text-main-blue px-3 py-2 rounded-lg font-medium text-sm transition-all duration-300 hover:bg-white"
-                  >
-                    {linkCopied ? (
-                      <>
-                        <CheckIcon className="mr-1 h-4 w-4" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Share1Icon className="mr-1 h-4 w-4" />
-                        Share Result
-                      </>
-                    )}
-                  </motion.button>
                 </div>
                 {deansListText && (
                   <motion.p
