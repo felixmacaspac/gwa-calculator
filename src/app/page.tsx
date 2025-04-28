@@ -16,8 +16,73 @@ import {
   ExclamationTriangleIcon,
   PlusCircledIcon,
   TrashIcon,
+  Share2Icon,
 } from "@radix-ui/react-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+
+interface ShareModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  sharerName: string;
+  setSharerName: (name: string) => void;
+  linkCopied: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+}
+
+const ShareModal: React.FC<ShareModalProps> = ({
+  isOpen,
+  onClose,
+  sharerName,
+  setSharerName,
+  linkCopied,
+  onSubmit
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-main-blue">Share your GWA calculation</h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <form onSubmit={onSubmit}>
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Your Name
+            </label>
+            <Input
+              id="name"
+              value={sharerName}
+              onChange={(e) => setSharerName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full"
+              required
+            />
+          </div>
+          
+          <div className="mt-6">
+            <button
+              type="submit"
+              className="w-full bg-main-yellow text-main-blue font-bold py-2 px-4 rounded-md hover:bg-yellow-400 transition-colors duration-300"
+            >
+              {linkCopied ? "Link Copied!" : "Copy Share Link"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 interface Grade {
   course: string;
@@ -32,6 +97,10 @@ export default function Home() {
   const [deansListText, setDeansListText] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [linkCopied, setLinkCopied] = useState<boolean>(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  const [sharerName, setSharerName] = useState<string>("");
+  const [shareLink, setShareLink] = useState<string>("");
+  const [viewingSharedBy, setViewingSharedBy] = useState<string>("");
 
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -39,6 +108,17 @@ export default function Home() {
   useEffect(() => {
     // First check if grades are in URL parameters
     const gradesParam = searchParams.get("grades");
+
+    const sharedByParam = searchParams.get("sharedBy");
+    
+    if (sharedByParam) {
+      try {
+        const decodedName = decodeURIComponent(sharedByParam);
+        setViewingSharedBy(decodedName);
+      } catch (e) {
+        console.error("Error parsing sharer name from URL", e);
+      }
+    }
 
     if (gradesParam) {
       try {
@@ -169,6 +249,9 @@ export default function Home() {
     // Update browser URL without page reload
     const newUrl = `${pathname}?${params.toString()}`;
     window.history.pushState({}, "", newUrl);
+    
+    // Generate share link for modal
+    setShareLink(window.location.origin + newUrl);
 
     if (calculatedGwa >= 3.25 && !hasLowGrade) {
       setShowConfetti(true);
@@ -248,6 +331,37 @@ export default function Home() {
       </TableCell>
     );
   };
+
+  const handleShareButtonClick = () => {
+    setSharerName("");
+    setIsShareModalOpen(true);
+  };
+
+  const handleShareSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!sharerName.trim()) {
+      return;
+    }
+
+    // Add sharer name to the URL
+    const url = new URL(shareLink);
+    url.searchParams.set("sharedBy", encodeURIComponent(sharerName));
+    
+    // Update the share link with the sharer's name
+    setShareLink(url.toString());
+    
+    // Copy the link to clipboard
+    navigator.clipboard.writeText(url.toString())
+      .then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy link: ', err);
+      });
+  };
+
 
   return (
     <main className="bg-main-blue overflow-hidden min-h-screen flex justify-center items-center flex-col">
@@ -399,6 +513,17 @@ export default function Home() {
                   >
                     GWA: {gwa}
                   </motion.p>
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.5 }}
+                    onClick={handleShareButtonClick}
+                    className="bg-main-yellow text-main-blue p-2 rounded-full hover:bg-yellow-400 transition-colors duration-300"
+                    title="Share your calculation"
+                  >
+                    <Share2Icon className="h-5 w-5" />
+                  </motion.button>
                 </div>
                 {deansListText && (
                   <motion.p
@@ -411,11 +536,30 @@ export default function Home() {
                     {deansListText}
                   </motion.p>
                 )}
+                {viewingSharedBy && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-white text-sm mt-3 font-medium"
+                  >
+                    Shared by: <span className="font-bold">{viewingSharedBy}</span>
+                  </motion.p>
+                )}
               </div>
             )}
           </AnimatePresence>
         </div>
       </div>
+      <ShareModal 
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        sharerName={sharerName}
+        setSharerName={setSharerName}
+        linkCopied={linkCopied}
+        onSubmit={handleShareSubmit}
+      />
     </main>
   );
 }
